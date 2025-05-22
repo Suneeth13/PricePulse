@@ -1,0 +1,93 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #fff;
+}
+
+.header {
+  background-color: #2196f3;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.container {
+  padding: 20px 40px;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  margin: 10px 0 20px 0;
+}
+
+.input-group input[type="text"] {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  margin-right: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.track-btn {
+  padding: 10px 20px;
+  background-color: #28c76f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.track-btn:hover {
+  background-color: #20b261;
+}
+
+.section {
+  margin-bottom: 30px;
+}
+
+.preview-box {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.image-placeholder {
+  width: 100px;
+  height: 60px;
+  background-color: #e0e0e0;
+  border: 1px solid #ccc;
+}
+
+.product-details p {
+  margin: 5px 0;
+}
+
+.graph-box {
+  width: 100%;
+  height: 200px;
+  border: 1px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9f9f9;
+  color: #888;
+  font-style: italic;
+}
+
+.platforms-box {
+  border: 1px solid #000;
+  padding: 10px;
+  background-color: #f3f3f3;
+}
+
+.platforms-box ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.platforms-box li {
+  margin-bottom: 5px;
+}

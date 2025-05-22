@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PricePulse - E-Commerce Price Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+  <div class="header">
+    <h1>PricePulse - E-Commerce Price Tracker</h1>
+  </div>
+
+  <div class="container">
+    <label for="product-url">Enter Amazon Product URL:</label>
+    <div class="input-group">
+      <input type="text" id="product-url" placeholder="Paste URL here..." />
+      <button class="track-btn">Track</button>
+    </div>
+
+    <div class="section">
+      <h3>Product Preview:</h3>
+      <div class="preview-box">
+        <div class="image-placeholder"></div>
+        <div class="product-details">
+          <p><strong>Samsung Galaxy M14</strong></p>
+          <p>Current Price: ₹13,499</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Price History Graph:</h3>
+      <div class="graph-box">
+        <canvas id="priceHistoryChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Available on Other Platforms (Bonus):</h3>
+      <div class="platforms-box">
+        <ul id="other-platforms-list">
+          <li>- Flipkart: ₹13,299</li>
+          <li>- Meesho: ₹13,499</li>
+          <li>- BigBasket: Not Available</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let priceHistoryChart = null;
+
+    function renderPriceHistoryChart(priceHistory) {
+      console.log("Rendering price history chart with data:", priceHistory);
+      // Group data by platform
+      const platforms = {};
+      priceHistory.forEach(entry => {
+        if (!platforms[entry.platform]) {
+          platforms[entry.platform] = [];
+        }
+        platforms[entry.platform].push({
+          x: new Date(entry.timestamp * 1000),
+          y: entry.price
+        });
+      });
+
+      const datasets = Object.keys(platforms).map(platform => ({
+        label: platform,
+        data: platforms[platform].sort((a,b) => a.x - b.x),
+        fill: false,
+        borderColor: getRandomColor(),
+        tension: 0,
+        pointRadius: 3,
+        pointHoverRadius: 6
+      }));
+
+      const ctx = document.getElementById('priceHistoryChart').getContext('2d');
+      if (priceHistoryChart) {
+        try {
+          priceHistoryChart.destroy();
+        } catch (e) {
+          console.warn("Error destroying chart:", e);
+        }
+      }
+      priceHistoryChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          datasets: datasets
+        },
+        options: {
+          scales: {
+            x: {
+              type: 'time',
+              time: {
+                unit: 'day'
+              },
+              title: {
+                display: true,
+                text: 'Date'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Price (₹)'
+              },
+              beginAtZero: false
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            }
+          }
+        }
+      });
+    }
+
+    function getRandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    function updateOtherPlatforms(otherPlatforms) {
+      console.log("Updating other platforms with data:", otherPlatforms);
+      const list = document.getElementById('other-platforms-list');
+      list.innerHTML = '';
+
+      // Sort platforms alphabetically or by preferred order
+      const preferredOrder = ["Flipkart", "Meesho", "BigBasket"];
+      const sortedPlatforms = Object.keys(otherPlatforms).sort((a, b) => {
+        const indexA = preferredOrder.indexOf(a);
+        const indexB = preferredOrder.indexOf(b);
+        if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+      });
+
+      // Format price with commas
+      function formatPrice(price) {
+        if (price === null) return 'Not Available';
+        return '₹' + price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+
+      for (const platform of sortedPlatforms) {
+        const price = otherPlatforms[platform];
+        const priceText = formatPrice(price);
+        const li = document.createElement('li');
+        li.textContent = `- ${platform}: ${priceText}`;
+        list.appendChild(li);
+      }
+    }
+
+    document.querySelector('.track-btn').addEventListener('click', async () => {
+      const url = document.getElementById('product-url').value;
+
+      const response = await fetch('/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+
+      const result = await response.json();
+
+      console.log("Track response:", result);
+
+      if (result.error) {
+        alert('Error: ' + result.error);
+      } else {
+        document.querySelector('.product-details').innerHTML = `
+          <p><strong>${result.title}</strong></p>
+          <p>Current Price: ${result.price}</p>
+        `;
+        const imagePlaceholder = document.querySelector('.image-placeholder');
+        if (result.image_url) {
+          imagePlaceholder.innerHTML = '<img src="' + result.image_url + '" alt="Product Image" style="max-width: 100%; max-height: 200px;" />';
+        } else {
+          imagePlaceholder.innerHTML = '';
+        }
+        renderPriceHistoryChart(result.price_history);
+        updateOtherPlatforms(result.other_platforms);
+      }
+    });
+  </script>
+</body>
+</html>
